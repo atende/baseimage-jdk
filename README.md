@@ -7,3 +7,5 @@ By using this image or derivative ones. You agree with the [Oracle License](http
 Tags:
  * jdk8 - The latest Java 8 JDK
  * jdk7 - The latest Java 7 JDK
+
+There is also tags for each build separeated in git branches, the tags follow the convention: jdk`version`u`update`b`build`, example: **jdk7u76b13** 
