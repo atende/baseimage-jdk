@@ -37,5 +37,5 @@ RUN curl -kLOH "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=ac
            /opt/jdk/jre/lib/amd64/libjfx*.so
 
 # Set environment
-RUN echo "export JAVA_HOME=/opt/jdk" >> /etc/bash.bashrc
-RUN echo "export PATH=$PATH:/opt/jdk/bin" >> /etc/bash.bashrc
+ENV JAVA_HOME /opt/jdk
+ENV PATH $PATH:$JAVA_HOME/bin
