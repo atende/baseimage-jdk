@@ -48,3 +48,6 @@ RUN update-alternatives --install \
   /usr/bin/javap     javap     "$JAVA_HOME/bin/javap"     --slave \
   /usr/bin/javaws    javaws    "$JAVA_HOME/bin/javaws"    --slave \
   /usr/bin/keytool   keytool   "$JAVA_HOME/bin/keytool"
+
+COPY install_startssl-certs.sh /root/install_startssl-certs.sh
+RUN /root/install_startssl-certs.sh
