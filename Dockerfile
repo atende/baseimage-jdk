@@ -4,8 +4,8 @@ MAINTAINER Giovanni Silva giovanni@atende.info
 
 # Java Version
 ENV JAVA_VERSION_MAJOR 8
-ENV JAVA_VERSION_MINOR 40
-ENV JAVA_VERSION_BUILD 26
+ENV JAVA_VERSION_MINOR 77
+ENV JAVA_VERSION_BUILD 03
 ENV JAVA_PACKAGE       server-jre
 
 # Download and unarchive Java
