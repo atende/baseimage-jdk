@@ -1,8 +1,7 @@
-#!/bin/sh
-#
-# Downloads and installs the startssl CA certs into the global java keystore
-# Author: Klaus Reimer <k@ailis.de>
-#
+#!/bin/bash
+# Downloads and installs the startssl CA certs into the global Java keystore
+# https://sipb.mit.edu/doc/safe-shell/
+set -euf -o pipefail
 
 # Check if JAVA_HOME is set
 if [ "$JAVA_HOME" = "" ]
@@ -18,32 +17,45 @@ then
     exit 1
 fi
 
-# Download the startssl certs
-echo "Downloading certs..."
-curl http://www.startssl.com/certs/ca.crt -o ca.crt
-curl http://www.startssl.com/certs/sub.class1.server.ca.crt -o sub.class1.server.ca.crt
-curl http://www.startssl.com/certs/sub.class2.server.ca.crt -o sub.class2.server.ca.crt
-curl http://www.startssl.com/certs/sub.class3.server.ca.crt -o sub.class3.server.ca.crt
-curl http://www.startssl.com/certs/sub.class4.server.ca.crt -o sub.class4.server.ca.crt
+##########################################
+## just change here the alias and url
+##########################################
+declare -A certificates=(
+    ["startcom.ca"]="http://www.startssl.com/certs/ca.crt" 
+    ["startcom.ca-g2"]="https://www.startssl.com/certs/ca-g2.crt"
+    ["startcom.ca-sha2"]="https://www.startssl.com/certs/ca-sha2.crt"
+    ["letsencrypt.ca"]="https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem"
+    )
 
-# Install certs into global keystore
-echo "Adding certs to cacerts keystore (sudo password required)..."
-sudo keytool -import -trustcacerts -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass changeit -noprompt -alias startcom.ca -file ca.crt
-sudo keytool -import -trustcacerts -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass changeit -noprompt -alias startcom.ca.sub.class1 -file sub.class1.server.ca.crt
-sudo keytool -import -trustcacerts -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass changeit -noprompt -alias startcom.ca.sub.class2 -file sub.class2.server.ca.crt
-sudo keytool -import -trustcacerts -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass changeit -noprompt -alias startcom.ca.sub.class3 -file sub.class3.server.ca.crt
-sudo keytool -import -trustcacerts -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass changeit -noprompt -alias startcom.ca.sub.class4 -file sub.class4.server.ca.crt
+# 
+# this function install one certificat
+# usage : installCertificate certificateAlias certificateUrl
+# 
+function installCertificate() {
+    local certificateAlias=$1
+    local certificateUrl=$2
+    echo "Processing $alias - ${certificates["$alias"]} ...";
 
-# If jsse is installed then also put the certs into jssecacerts keystore
-if [ -f $JAVA_HOME/jre/lib/security/jssecacerts ]
-then
-    echo "Adding certs to jssecacerts keystore (sudo password required)..."
-    sudo keytool -import -trustcacerts -keystore $JAVA_HOME/jre/lib/security/jssecacerts -storepass changeit -noprompt -alias startcom.ca -file ca.crt
-    sudo keytool -import -trustcacerts -keystore $JAVA_HOME/jre/lib/security/jssecacerts -storepass changeit -noprompt -alias startcom.ca.sub.class1 -file sub.class1.server.ca.crt
-    sudo keytool -import -trustcacerts -keystore $JAVA_HOME/jre/lib/security/jssecacerts -storepass changeit -noprompt -alias startcom.ca.sub.class2 -file sub.class2.server.ca.crt
-    sudo keytool -import -trustcacerts -keystore $JAVA_HOME/jre/lib/security/jssecacerts -storepass changeit -noprompt -alias startcom.ca.sub.class3 -file sub.class3.server.ca.crt
-    sudo keytool -import -trustcacerts -keystore $JAVA_HOME/jre/lib/security/jssecacerts -storepass changeit -noprompt -alias startcom.ca.sub.class4 -file sub.class4.server.ca.crt
-fi
+    echo "Downloading certs $certificateAlias : $certificateUrl ..."
+        curl "$certificateUrl" > $certificateAlias.crt
+    
+    echo "Deleting cert from cacerts keystore (sudo password required)..."
+        sudo keytool -delete -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass changeit -noprompt -alias $certificateAlias || true
+    echo "Adding cert to cacerts keystore (sudo password required)..."
+        sudo keytool -import -trustcacerts -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass changeit -noprompt -alias $certificateAlias -file $certificateAlias.crt
+    
+    if [ -f $JAVA_HOME/jre/lib/security/jssecacerts ]
+    then
+        echo "Deleting cert from jssecacerts keystore (sudo password required)..."
+            sudo keytool -delete  -keystore $JAVA_HOME/jre/lib/security/jssecacerts -storepass changeit -noprompt -alias $certificateAlias || true 
+        echo "Adding cert to jssecacerts keystore (sudo password required)..."
+            sudo keytool -import -trustcacerts -keystore $JAVA_HOME/jre/lib/security/jssecacerts -storepass changeit -noprompt -alias $certificateAlias -file $certificateAlias.crt
+    fi
 
-# Remove downloaded certs
-rm -f ca.crt sub.class1.server.ca.crt sub.class2.server.ca.crt sub.class3.server.ca.crt sub.class4.server.ca.crt
+    rm -f $certificateAlias.crt
+}
+
+# loop throw certificates map and call installCertificate
+for alias in "${!certificates[@]}"; do 
+    installCertificate $alias ${certificates["$alias"]};
+done
