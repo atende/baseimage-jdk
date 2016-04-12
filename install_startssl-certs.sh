@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Downloads and installs the startssl CA certs into the global Java keystore
 # https://sipb.mit.edu/doc/safe-shell/
 set -euf -o pipefail
